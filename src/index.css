@@ -1,0 +1,210 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-brand-950: #0a3d1c;
+  --color-brand-900: #0d5c28;
+  --color-brand-800: #147a36;
+  --color-brand-700: #1a9440;
+  --color-brand-600: #22a84a;
+  --color-brand-500: #3cbc60;
+  --color-brand-100: #d4f0dc;
+  --color-brand-50: #eef8f1;
+  --color-ink: #1a2332;
+  --color-muted: #5f7466;
+}
+
+:root {
+  --app-bg: #f4f6fb;
+  --app-bg-soft: #eef1f6;
+  --app-surface: #ffffff;
+  --app-surface-2: #f7f9fc;
+  --app-text: #1e293b;
+  --app-text-muted: #8b93a1;
+  --app-border: #eef1f6;
+  --app-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+  --app-nav: #ffffff;
+}
+
+html.dark {
+  --app-bg: #0f141c;
+  --app-bg-soft: #121821;
+  --app-surface: #171e2b;
+  --app-surface-2: #1c2433;
+  --app-text: #e8edf4;
+  --app-text-muted: #8b95a7;
+  --app-border: #2a3444;
+  --app-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+  --app-nav: #141b27;
+  --color-ink: #e8edf4;
+  --color-muted: #8b95a7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  min-height: 100dvh;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #b7d0be;
+  border-radius: 99px;
+}
+
+html.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #3a4658;
+}
+
+.card {
+  background: var(--app-surface);
+  border-radius: 22px;
+  box-shadow: var(--app-shadow);
+}
+
+.safe-bottom {
+  padding-bottom: calc(5.6rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  .safe-bottom {
+    padding-bottom: 1.5rem;
+  }
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hemis-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.page-title {
+  margin-top: 0.35rem;
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--app-text);
+}
+
+@media (min-width: 768px) {
+  .page-title {
+    font-size: 1.625rem;
+  }
+}
+
+.page-crumb {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--app-text-muted);
+}
+
+.surface {
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow);
+}
+
+/* Dark remaps for existing light-only Hemis screens */
+html.dark .bg-white {
+  background-color: var(--app-surface);
+}
+html.dark .bg-\[\#f4f6fb\],
+html.dark .bg-\[\#eef6f0\],
+html.dark .bg-\[\#f3f6fb\],
+html.dark .bg-\[\#f7f9fc\],
+html.dark .bg-\[\#f3f5f8\],
+html.dark .bg-\[\#eef3fb\] {
+  background-color: var(--app-surface-2);
+}
+html.dark .bg-slate-50,
+html.dark .hover\:bg-slate-50:hover,
+html.dark .hover\:bg-white:hover {
+  background-color: var(--app-surface-2);
+}
+html.dark .text-ink,
+html.dark .text-\[\#2b3340\],
+html.dark .text-\[\#1e293b\],
+html.dark .text-\[\#334155\] {
+  color: var(--app-text);
+}
+html.dark .text-muted,
+html.dark .text-slate-400,
+html.dark .text-slate-500,
+html.dark .text-slate-600,
+html.dark .text-\[\#9aa3b2\],
+html.dark .text-\[\#8b93a1\],
+html.dark .text-\[\#5b6472\] {
+  color: var(--app-text-muted);
+}
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-\[\#eef1f6\],
+html.dark .border-\[\#f3f5f8\] {
+  border-color: var(--app-border);
+}
+html.dark .bg-\[\#e8f1ff\],
+html.dark .bg-\[\#eaf1ff\],
+html.dark .bg-\[\#f3f7ff\] {
+  background-color: #1a2a44;
+}
+html.dark .text-\[\#2f80ed\] {
+  color: #6aa4ff;
+}
+html.dark .bg-\[\#e8f8ee\],
+html.dark .bg-\[\#e7f8ee\] {
+  background-color: #163024;
+}
+html.dark .shadow-\[0_10px_30px_rgba\(15\,23\,42\,0\.04\)\],
+html.dark .shadow-\[0_8px_24px_rgba\(15\,23\,42\,0\.04\)\],
+html.dark .shadow-\[0_10px_24px_rgba\(15\,23\,42\,0\.12\)\] {
+  box-shadow: var(--app-shadow);
+}
+html.dark .bg-\[\#fdecee\] {
+  background-color: #3a1c22;
+}
+html.dark .bg-\[\#eef1f6\] {
+  background-color: #222b3a;
+}
