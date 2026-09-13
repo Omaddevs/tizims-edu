@@ -125,5 +125,6 @@ export function profileOf(me, group) {
     studentId: me?.studentId || me?.id || '—',
     officialName,
     photo: me?.photo || '',
+    displayName: [firstName, lastName].filter(Boolean).join(' ') || me?.name || '—',
   }
 }

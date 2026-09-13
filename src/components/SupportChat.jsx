@@ -237,7 +237,7 @@ export default function SupportChat({ visible = true }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed bottom-[4.6rem] right-4 z-[70] flex h-12 items-center gap-1.5 rounded-full bg-gradient-to-br from-[#4cc9f0] to-[#4361ee] px-3.5 text-[11px] font-extrabold tracking-wide text-white shadow-[0_10px_24px_rgba(67,97,238,0.4)] md:bottom-6 md:right-6 lg:right-8"
+          className="fixed bottom-6 right-6 z-[70] hidden h-12 items-center gap-1.5 rounded-full bg-gradient-to-br from-[#4cc9f0] to-[#4361ee] px-3.5 text-[11px] font-extrabold tracking-wide text-white shadow-[0_10px_24px_rgba(67,97,238,0.4)] md:flex lg:right-8"
           aria-label="Support"
           title="Support"
         >

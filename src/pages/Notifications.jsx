@@ -1,34 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
-  Bell,
-  BookOpen,
-  Briefcase,
-  CalendarDays,
   Check,
   ChevronLeft,
-  ClipboardList,
   Clock,
   FileText,
-  Folder,
-  GraduationCap,
   Inbox,
-  Library,
-  LifeBuoy,
-  Megaphone,
-  MessageSquareWarning,
-  Newspaper,
   Search,
   Send,
-  Settings,
-  Shield,
   Trash2,
-  Users,
-  Wallet,
 } from 'lucide-react'
 import { useCurrentUser, useStore } from '../store/useStore'
 import { timeAgo } from '../lib/utils'
-import { EmptyInbox, MenuCard } from '../components/HemisUI'
+import { EmptyInbox } from '../components/HemisUI'
 import { cn, Field, Select } from '../components/ui'
 
 const hemisField =
@@ -255,7 +238,6 @@ function MessageDetail({ item, folder, onBack, onEditDraft }) {
 }
 
 export default function Notifications() {
-  const navigate = useNavigate()
   const me = useCurrentUser()
   const users = useStore((s) => s.users)
   const notifications = useStore((s) => s.notifications)
@@ -450,65 +432,6 @@ export default function Notifications() {
         <h1 className="page-title mt-0">Xabarlar</h1>
       )}
       <div className="mt-5">{body}</div>
-    </div>
-  )
-}
-
-export function More() {
-  const navigate = useNavigate()
-  const me = useCurrentUser()
-  const logout = useStore((s) => s.logout)
-  const student = me.role === 'student'
-
-  const items = [
-    { to: '/attendance', label: 'Davomat', icon: ClipboardList },
-    { to: '/schedule', label: 'Dars jadvali', icon: CalendarDays },
-    { to: '/subjects', label: 'Fanlar', icon: BookOpen },
-    { to: '/education-params', label: 'O‘quv parametrlari', icon: GraduationCap },
-    { to: '/courses', label: 'Kurslar', icon: GraduationCap },
-    { to: '/exams', label: 'Imtihonlar', icon: ClipboardList },
-    { to: '/surveys', label: 'So‘rovnomalar', icon: Inbox },
-    { to: '/assignments', label: 'Topshiriqlar', icon: FileText },
-    { to: '/library', label: 'Elektron kutubxona', icon: Library },
-    { to: '/documents', label: 'Hujjatlar', icon: Folder },
-    student ? { to: '/payments', label: 'Moliyaviy to‘lov', icon: Wallet } : null,
-    { to: '/announcements', label: 'Yangiliklar', icon: Megaphone },
-    { to: '/vacancies', label: 'Vakansiyalar', icon: Briefcase },
-    { to: '/blog', label: 'Blog', icon: Newspaper },
-    me.role !== 'teacher' ? { to: '/complaints', label: 'Shikoyatlar', icon: MessageSquareWarning } : null,
-    { to: '/support', label: 'Support', icon: LifeBuoy },
-    { to: '/notifications', label: 'Xabarlar', icon: Bell },
-    { to: '/settings', label: 'Sozlamalar', icon: Settings },
-    me.role === 'super_admin' ? { to: '/users', label: 'Foydalanuvchilar', icon: Users } : null,
-    me.role === 'super_admin' ? { to: '/teachers', label: 'O‘qituvchilar', icon: GraduationCap } : null,
-    me.role === 'teacher' || me.role === 'super_admin' ? { to: '/students', label: 'Talabalar', icon: Users } : null,
-    me.role === 'super_admin' ? { to: '/groups', label: 'Guruhlar', icon: Shield } : null,
-    me.role === 'super_admin' ? { to: '/reports', label: 'Hisobotlar', icon: BookOpen } : null,
-  ].filter(Boolean)
-
-  return (
-    <div>
-      <div className="mb-5 flex items-start justify-between gap-3">
-        <div>
-          <p className="page-crumb">Asosiy / Barchasi</p>
-          <h1 className="page-title">Barchasi</h1>
-        </div>
-        <button
-          type="button"
-          className="rounded-xl border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-600"
-          onClick={() => {
-            logout()
-            navigate('/login')
-          }}
-        >
-          Chiqish
-        </button>
-      </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-        {items.map((it) => (
-          <MenuCard key={it.to + it.label} label={it.label} icon={it.icon} onClick={() => navigate(it.to)} />
-        ))}
-      </div>
     </div>
   )
 }

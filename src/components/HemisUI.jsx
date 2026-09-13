@@ -242,14 +242,24 @@ export function QrBtn({ onClick }) {
   )
 }
 
-export function BannerCard({ title, type, onClick }) {
+export function BannerCard({ title, type, image, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className="h-[104px] w-[148px] shrink-0 snap-start overflow-hidden rounded-[16px] text-left shadow-[0_8px_18px_rgba(13,92,40,0.22)] lg:h-[148px] lg:min-w-0 lg:flex-1 lg:w-auto"
     >
-      <Cover type={type} title={title} variant="banner" />
+      {image ? (
+        <span className="relative block h-full w-full">
+          <img src={image} alt="" className="h-full w-full object-cover" />
+          <span className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+          <span className="absolute inset-x-0 bottom-0 p-2.5 text-[12px] font-semibold leading-[1.3] text-white [overflow-wrap:anywhere] line-clamp-3 lg:p-3 lg:text-[13px]">
+            {title}
+          </span>
+        </span>
+      ) : (
+        <Cover type={type} title={title} variant="banner" />
+      )}
     </button>
   )
 }
@@ -293,7 +303,7 @@ export function BannerStrip({ items = [], onOpen }) {
         className="no-scrollbar flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-0.5 lg:gap-4 lg:overflow-visible lg:snap-none"
       >
         {items.map((b, i) => (
-          <BannerCard key={b.to || i} title={b.title} type={b.cover} onClick={() => onOpen?.(b.to)} />
+          <BannerCard key={b.to || i} title={b.title} type={b.cover} image={b.image} onClick={() => onOpen?.(b.to)} />
         ))}
       </div>
       {thumb.show && (

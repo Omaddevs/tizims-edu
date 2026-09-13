@@ -143,13 +143,6 @@ export default function EducationParams() {
 
   const body = (
     <div className="min-w-0 max-w-full pb-8">
-      <div className="hidden lg:block">
-        <p className="text-[12px] font-medium text-[#9aa3b2]">
-          Asosiy <span className="mx-1 text-[#c5cad3]">/</span> Dashboard <span className="mx-1 text-[#c5cad3]">/</span> O‘quv parametrlari
-        </p>
-        <h1 className="mt-1.5 text-[26px] font-bold leading-none text-[#2b3340]">O‘quv parametrlari</h1>
-      </div>
-
       <div className="no-scrollbar mt-5 flex gap-5 overflow-x-auto overflow-y-hidden border-b border-[#eef1f6]">
         {TABS.map((t) => (
           <button
@@ -362,13 +355,15 @@ export default function EducationParams() {
   return (
     <div>
       {me.role === 'student' ? (
-        <div className="mb-5">
+        <>
           <p className="page-crumb">
             Asosiy <span className="mx-1">/</span> Dashboard <span className="mx-1">/</span> O‘quv parametrlari
           </p>
           <h1 className="page-title">O‘quv parametrlari</h1>
-        </div>
-      ) : null}
+        </>
+      ) : (
+        <h1 className="page-title mt-0">O‘quv parametrlari</h1>
+      )}
       {body}
     </div>
   )

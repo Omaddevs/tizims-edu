@@ -26,6 +26,10 @@
   --app-border: #eef1f6;
   --app-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
   --app-nav: #ffffff;
+  --scroll-track: transparent;
+  --scroll-thumb: #b8c1cd;
+  --scroll-thumb-hover: #2f80ed;
+  --scroll-thumb-active: #1b6fd6;
 }
 
 html.dark {
@@ -40,6 +44,9 @@ html.dark {
   --app-nav: #141b27;
   --color-ink: #e8edf4;
   --color-muted: #8b95a7;
+  --scroll-thumb: #4a5668;
+  --scroll-thumb-hover: #6aa4ff;
+  --scroll-thumb-active: #8bb6ff;
 }
 
 * {
@@ -73,18 +80,118 @@ textarea {
   font-size: 16px;
 }
 
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--app-bg-soft);
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: var(--app-bg-soft);
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background-color: var(--scroll-thumb);
+  border: 3px solid var(--app-bg-soft);
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scroll-thumb-hover);
+}
+
+html::-webkit-scrollbar-corner,
+body::-webkit-scrollbar-corner {
+  background: var(--app-bg-soft);
+}
+
+.app-scroll,
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+
+.app-scroll {
+  scrollbar-color: var(--scroll-thumb) #f3f5f8;
+}
+
+html.dark .app-scroll {
+  scrollbar-color: var(--scroll-thumb) #1c2433;
+}
+
+.app-scroll::-webkit-scrollbar,
 .scrollbar-thin::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 11px;
+  height: 11px;
 }
 
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 8px 4px;
+}
+
+.app-scroll::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.app-scroll::-webkit-scrollbar-track:vertical {
+  margin: 14px 3px;
+  border-radius: 999px;
+  background: #f3f5f8;
+}
+
+.app-scroll::-webkit-scrollbar-track:horizontal {
+  margin: 3px 14px;
+  border-radius: 999px;
+  background: #f3f5f8;
+}
+
+html.dark .app-scroll::-webkit-scrollbar-track:vertical,
+html.dark .app-scroll::-webkit-scrollbar-track:horizontal {
+  background: #1c2433;
+}
+
+.app-scroll::-webkit-scrollbar-thumb,
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #b7d0be;
-  border-radius: 99px;
+  background-color: var(--scroll-thumb);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+  min-height: 40px;
+  min-width: 40px;
 }
 
-html.dark .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #3a4658;
+.app-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid #f3f5f8;
+}
+
+html.dark .app-scroll::-webkit-scrollbar-thumb {
+  border-color: #1c2433;
+}
+
+.app-scroll::-webkit-scrollbar-thumb:hover,
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scroll-thumb-hover);
+}
+
+.app-scroll::-webkit-scrollbar-thumb:active,
+.scrollbar-thin::-webkit-scrollbar-thumb:active {
+  background-color: var(--scroll-thumb-active);
+}
+
+.app-scroll::-webkit-scrollbar-corner,
+.scrollbar-thin::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .card {
@@ -202,9 +309,348 @@ html.dark .shadow-\[0_8px_24px_rgba\(15\,23\,42\,0\.04\)\],
 html.dark .shadow-\[0_10px_24px_rgba\(15\,23\,42\,0\.12\)\] {
   box-shadow: var(--app-shadow);
 }
+html.dark .bg-\[\#fff4d6\] {
+  background-color: #3a3218;
+}
+html.dark .bg-\[\#fde8ee\],
 html.dark .bg-\[\#fdecee\] {
   background-color: #3a1c22;
 }
 html.dark .bg-\[\#eef1f6\] {
   background-color: #222b3a;
+}
+
+/* Schedule lesson cards + pastel status chips — keep fills dim in dark mode */
+html.dark .bg-emerald-50,
+html.dark .bg-brand-50 {
+  background-color: #1a2622;
+}
+html.dark .border-emerald-200,
+html.dark .border-brand-200 {
+  border-color: rgba(120, 175, 150, 0.22);
+}
+html.dark .text-emerald-800,
+html.dark .text-emerald-700,
+html.dark .text-brand-900,
+html.dark .text-brand-800,
+html.dark .text-brand-700 {
+  color: #c2d6cb;
+}
+html.dark .bg-rose-50 {
+  background-color: #271a1d;
+}
+html.dark .border-rose-200 {
+  border-color: rgba(190, 120, 125, 0.22);
+}
+html.dark .text-rose-800,
+html.dark .text-rose-700 {
+  color: #ddc4c6;
+}
+html.dark .bg-amber-50 {
+  background-color: #272318;
+}
+html.dark .border-amber-200 {
+  border-color: rgba(190, 165, 100, 0.22);
+}
+html.dark .text-amber-800,
+html.dark .text-amber-700 {
+  color: #d8cbb0;
+}
+html.dark .hover\:bg-brand-50:hover,
+html.dark .hover\:bg-emerald-50:hover {
+  background-color: #1f302b;
+}
+html.dark .hover\:bg-rose-50:hover {
+  background-color: #332022;
+}
+
+html.dark .schedule-lesson {
+  background-color: #1a2622;
+  border-color: rgba(120, 175, 150, 0.22);
+  color: #c2d6cb;
+}
+html.dark .schedule-lesson-attended {
+  background-color: #1a2622;
+  border-color: rgba(120, 175, 150, 0.22);
+  color: #c2d6cb;
+}
+html.dark .schedule-lesson-unexcused {
+  background-color: #271a1d;
+  border-color: rgba(190, 120, 125, 0.22);
+  color: #ddc4c6;
+}
+html.dark .schedule-lesson-excused {
+  background-color: #272318;
+  border-color: rgba(190, 165, 100, 0.22);
+  color: #d8cbb0;
+}
+html.dark .bg-\[\#e9f9f0\] {
+  background-color: #1a2622;
+}
+
+.more-dock-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  border: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.32s ease;
+}
+
+.more-dock-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+html.dark .more-dock-backdrop {
+  background: rgba(2, 6, 16, 0.58);
+}
+
+.more-dock-item {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 91;
+  display: flex;
+  width: 4.35rem;
+  margin-left: -2.175rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--app-text);
+  transform: translate3d(0, 12px, 0) scale(0.22);
+  opacity: 0;
+  pointer-events: none;
+  filter: blur(8px);
+  transition:
+    transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.28s ease,
+    filter 0.34s ease;
+  will-change: transform, opacity, filter;
+}
+
+.more-dock-item.is-open {
+  transform: translate3d(var(--dx), var(--dy), 0) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+  filter: blur(0);
+}
+
+.more-dock-orb {
+  display: grid;
+  height: 3.2rem;
+  width: 3.2rem;
+  place-items: center;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--tint);
+  box-shadow:
+    0 12px 28px color-mix(in srgb, var(--tint) 28%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--tint) 16%, transparent);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+html.dark .more-dock-orb {
+  background: #243044;
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.45),
+    0 0 0 1px color-mix(in srgb, var(--tint) 40%, transparent);
+}
+
+.more-dock-item.is-current .more-dock-orb {
+  box-shadow:
+    0 12px 28px color-mix(in srgb, var(--tint) 36%, transparent),
+    0 0 0 2.5px var(--tint);
+}
+
+.more-dock-item:active .more-dock-orb {
+  transform: scale(0.92);
+}
+
+.more-dock-label {
+  max-width: 4.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-bg) 88%, transparent);
+  padding: 0.12rem 0.4rem;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  backdrop-filter: blur(8px);
+}
+
+.more-dock-plus {
+  display: grid;
+  height: 2.15rem;
+  width: 2.15rem;
+  place-items: center;
+  border-radius: 999px;
+  color: #94a3b8;
+  transition:
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.32s ease;
+}
+
+.more-dock-plus.is-open {
+  transform: rotate(45deg) scale(1.06);
+}
+
+.more-dock-plus.is-active {
+  color: #fff;
+}
+
+.tab-liquid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: 999px;
+  background: #2f80ed;
+  box-shadow: 0 8px 18px rgba(47, 128, 237, 0.38);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.tab-liquid.is-visible {
+  opacity: 1;
+}
+
+.tab-bar-item {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab-bar-icon,
+.tab-bar-plus-slot {
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+}
+
+.tab-bar-icon {
+  height: 2rem;
+  width: 2rem;
+  color: #94a3b8;
+  transition: color 0.34s ease;
+}
+
+.tab-bar-icon svg {
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tab-bar-plus-slot {
+  height: 2.15rem;
+  width: 2.15rem;
+}
+
+.tab-bar-icon.is-active {
+  color: #fff;
+}
+
+.tab-bar-icon.is-active svg {
+  transform: scale(1.06);
+}
+
+.tab-bar-label {
+  color: #94a3b8;
+  transition: color 0.34s ease;
+}
+
+.tab-bar-label.is-active {
+  font-weight: 600;
+  color: #2f80ed;
+}
+
+html.dark .tab-bar-icon,
+html.dark .more-dock-plus,
+html.dark .tab-bar-label {
+  color: #8b95a7;
+}
+
+html.dark .tab-bar-icon.is-active,
+html.dark .more-dock-plus.is-active {
+  color: #fff;
+}
+
+html.dark .tab-bar-label.is-active {
+  color: #6aa4ff;
+}
+
+.tizims-id-card {
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.1);
+}
+.tizims-id-card .idc-name,
+.tizims-id-card .idc-value,
+.tizims-id-card .idc-valid-date {
+  color: #1e293b;
+}
+.tizims-id-card .idc-meta,
+.tizims-id-card .idc-valid-label {
+  color: #64748b;
+}
+.tizims-id-card .idc-icon {
+  color: #94a3b8;
+}
+.tizims-id-card .idc-header {
+  isolation: isolate;
+}
+.tizims-id-card .idc-brand {
+  background: none !important;
+  mix-blend-mode: screen;
+}
+.tizims-id-card .idc-qr,
+.tizims-id-card .idc-barcode {
+  background: #fff !important;
+}
+html.dark .tizims-id-card {
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+html.dark .tizims-id-card .idc-name,
+html.dark .tizims-id-card .idc-value,
+html.dark .tizims-id-card .idc-valid-date {
+  color: #1e293b;
+}
+html.dark .tizims-id-card .idc-meta,
+html.dark .tizims-id-card .idc-valid-label {
+  color: #64748b;
+}
+html.dark .tizims-id-card .idc-icon {
+  color: #94a3b8;
+}
+html.dark .tizims-id-card .idc-brand {
+  background: none !important;
+}
+html.dark .tizims-id-card .idc-qr,
+html.dark .tizims-id-card .idc-barcode {
+  background: #fff !important;
+}
+
+@media (max-width: 360px) {
+  .more-dock-item.is-open {
+    transform: translate3d(calc(var(--dx) * 0.78), var(--dy), 0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .more-dock-backdrop,
+  .more-dock-item,
+  .more-dock-orb,
+  .more-dock-plus,
+  .tab-liquid,
+  .tab-bar-icon,
+  .tab-bar-label {
+    transition: none;
+    filter: none;
+  }
 }

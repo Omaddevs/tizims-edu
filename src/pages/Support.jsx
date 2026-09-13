@@ -114,20 +114,29 @@ function HelpCard({ title, text, href, icon, onClick }) {
 
 function NewsTeaser() {
   const navigate = useNavigate()
+  const announcements = useStore((s) => s.announcements)
+  const latest = announcements.reduce((best, item) => {
+    if (!best) return item
+    return new Date(item.createdAt) > new Date(best.createdAt) ? item : best
+  }, null)
+  if (!latest) return null
+  const cover = latest.coverData || latest.image
   return (
     <button
       type="button"
-      onClick={() => navigate('/announcements')}
-      className="flex w-[196px] items-start gap-2.5 rounded-[16px] bg-white p-3.5 text-left shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:shadow-[0_12px_28px_rgba(15,23,42,0.08)]"
+      onClick={() => navigate(`/announcements/${latest.id}`)}
+      className="flex w-[240px] overflow-hidden rounded-[16px] bg-white text-left shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:shadow-[0_12px_28px_rgba(15,23,42,0.08)]"
     >
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#eef3fb] text-[#94a3b8]">
-        <Volume2 size={16} strokeWidth={1.8} />
-      </span>
-      <span>
-        <span className="block text-[13px] font-semibold leading-snug text-[#2b3340]">Yangiliklar tez orada</span>
-        <span className="mt-1 block text-[11px] leading-snug text-[#9aa3b2]">
-          Universitet e’lonlari va yangiliklari shu yerda paydo bo‘ladi
+      {cover ? (
+        <img src={cover} alt="" className="h-[72px] w-[88px] shrink-0 object-cover" />
+      ) : (
+        <span className="grid h-[72px] w-[88px] shrink-0 place-items-center bg-[#eef3fb] text-[#94a3b8]">
+          <Volume2 size={16} strokeWidth={1.8} />
         </span>
+      )}
+      <span className="min-w-0 px-3 py-2.5">
+        <span className="block text-[11px] font-medium text-[#9aa3b2]">Yangiliklar</span>
+        <span className="mt-0.5 line-clamp-2 text-[13px] font-semibold leading-snug text-[#2b3340]">{latest.title}</span>
       </span>
     </button>
   )

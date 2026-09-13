@@ -11,7 +11,7 @@ import CoursesPage from './pages/Courses'
 import SchedulePage from './pages/Schedule'
 import DocumentsPage, { DocumentCategoryPage, DocumentFilePage } from './pages/Documents'
 import Payments from './pages/Payments'
-import ExamsPage, { ExamDetail } from './pages/Exams'
+import TestsPage, { TestDetail, TestTake, ResultsPage, ResultDetail } from './pages/Exams'
 import Assignments, { AssignmentDetail } from './pages/Assignments'
 import Library from './pages/Library'
 import BookDetail from './pages/BookDetail'
@@ -24,7 +24,7 @@ import UsersPage from './pages/Users'
 import Groups from './pages/Groups'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
-import Notifications, { More } from './pages/Notifications'
+import Notifications from './pages/Notifications'
 import { useCurrentUser, useStore } from './store/useStore'
 import { ThemeProvider } from './lib/ThemeContext'
 
@@ -76,8 +76,12 @@ export default function App() {
             <Route path="documents" element={<DocumentsPage />} />
             <Route path="documents/:id" element={<DocumentCategoryPage />} />
             <Route path="documents/:id/:fileId" element={<DocumentFilePage />} />
-            <Route path="exams" element={<ExamsPage />} />
-            <Route path="exams/:id" element={<ExamDetail />} />
+            <Route path="exams" element={<Navigate to="/exams/tests" replace />} />
+            <Route path="exams/tests" element={<TestsPage />} />
+            <Route path="exams/tests/:id" element={<TestDetail />} />
+            <Route path="exams/tests/:id/take" element={<TestTake />} />
+            <Route path="exams/results" element={<ResultsPage />} />
+            <Route path="exams/results/:id" element={<ResultDetail />} />
             <Route path="attendance" element={<Attendance />} />
             <Route path="education-params" element={<EducationParams />} />
             <Route path="assignments" element={<Assignments />} />
@@ -101,7 +105,7 @@ export default function App() {
             <Route path="support/:id" element={<Support />} />
             <Route path="notifications" element={<Notifications />} />
             <Route path="settings" element={<Settings />} />
-            <Route path="more" element={<More />} />
+            <Route path="more" element={<Navigate to="/" replace />} />
             <Route element={<Guard roles={['super_admin']} />}>
               <Route path="users" element={<UsersPage />} />
               <Route path="teachers" element={<UsersPage roleFilter="teacher" />} />

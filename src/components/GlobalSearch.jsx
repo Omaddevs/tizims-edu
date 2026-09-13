@@ -46,7 +46,9 @@ const EXTRA = [
   { id: 'schedule', label: 'Dars jadvali', to: '/schedule', tags: ['jadval', 'dars', 'schedule'] },
   { id: 'subjects', label: 'Fanlar', to: '/subjects', tags: ['fan', 'subjects'] },
   { id: 'courses', label: 'Kurslar', to: '/courses', tags: ['kurs', 'courses'] },
-  { id: 'exams', label: 'Imtihonlar', to: '/exams', tags: ['imtihon', 'sessiya'] },
+  { id: 'exams', label: 'Imtihonlar', to: '/exams/tests', tags: ['imtihon', 'sessiya', 'test'] },
+  { id: 'exam-tests', label: 'Testlar', to: '/exams/tests', tags: ['test', 'onlayn test', 'nazorat'] },
+  { id: 'exam-results', label: 'Natijalar', to: '/exams/results', tags: ['natija', 'ball', 'baho', 'imtihon'] },
   { id: 'params', label: 'O‘quv parametrlari', to: '/education-params', tags: ['o‘quv reja', 'gpa', 'parametr'] },
   { id: 'plan', label: 'O‘quv reja', to: '/education-params?tab=plan', tags: ['reja', 'fanlar'] },
   { id: 'gpa', label: 'GPA', to: '/education-params?tab=gpa', tags: ['gpa', 'reyting'] },
@@ -73,6 +75,12 @@ function matches(item, q) {
   return hay.includes(q)
 }
 
+export function searchCatalog(query) {
+  const q = fold(String(query || '').trim())
+  if (!q) return POPULAR
+  return [...POPULAR, ...EXTRA].filter((item) => matches(item, q))
+}
+
 export function GlobalSearch({ open, onClose }) {
   const navigate = useNavigate()
   const inputRef = useRef(null)
@@ -81,11 +89,7 @@ export function GlobalSearch({ open, onClose }) {
   const [active, setActive] = useState(-1)
   const [listening, setListening] = useState(false)
 
-  const list = useMemo(() => {
-    const q = fold(query.trim())
-    if (!q) return POPULAR
-    return [...POPULAR, ...EXTRA].filter((item) => matches(item, q))
-  }, [query])
+  const list = useMemo(() => searchCatalog(query), [query])
 
   const go = useCallback(
     (to) => {

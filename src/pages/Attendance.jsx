@@ -359,7 +359,7 @@ function StudentHemisAttendance({ records, users, schedule }) {
           type="button"
           title="Support"
           onClick={openSupportChat}
-          className="rounded-lg bg-gradient-to-b from-[#5ad0f6] to-[#4f6ef7] px-2 py-1.5 text-[10px] font-extrabold tracking-wide text-white shadow-[0_4px_10px_rgba(79,110,247,0.3)]"
+          className="hidden rounded-lg bg-gradient-to-b from-[#5ad0f6] to-[#4f6ef7] px-2 py-1.5 text-[10px] font-extrabold tracking-wide text-white shadow-[0_4px_10px_rgba(79,110,247,0.3)] md:inline-flex"
         >
           Support
         </button>

@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   BadgeCheck,
+  BarChart3,
   Bell,
   BookOpen,
   Briefcase,
@@ -46,17 +47,33 @@ import { BannerStrip, IconGridItem, QuickBlue, QrBtn, shortName } from '../compo
 import { MONTHS_UZ, MONTHS_UZ_SHORT, addDays, matchesDate, startOfWeek } from '../lib/schedule'
 import { ROLE_LABEL } from '../lib/utils'
 import { openSupportChat } from '../lib/supportChat'
+import { academicSemesters } from '../data/academic'
+import {
+  TESTS,
+  formatExamDate,
+  getAttempt,
+  gradeFromPercent,
+  scoreAnswers,
+} from '../data/exams'
 
 const SEMESTERS = Array.from({ length: 8 }, (_, i) => String(i + 1))
 
 const DASH_WIDGETS = [
-  { id: 'assignments', title: 'Topshiriqlar', span: 1, icon: ClipboardCheck, tint: '#14b8a6' },
-  { id: 'schedule', title: 'Dars jadvali', span: 1, icon: CalendarDays, tint: '#22c55e' },
-  { id: 'progress', title: 'O‘zlashtirish', span: 1, icon: BadgeCheck, tint: '#a855f7' },
-  { id: 'attendance', title: 'Davomat', span: 1, icon: CalendarClock, tint: '#3b82f6' },
-  { id: 'gpa', title: 'GPA', span: 2, icon: Star, tint: '#f59e0b' },
-  { id: 'gpaRating', title: 'GPA reyting', span: 2, icon: Settings2, tint: '#ef4444' },
+  { id: 'assignments', title: 'Topshiriqlar', span: 3, icon: ClipboardCheck, tint: '#14b8a6' },
+  { id: 'schedule', title: 'Dars jadvali', span: 3, icon: CalendarDays, tint: '#22c55e' },
+  { id: 'progress', title: 'O‘zlashtirish', span: 3, icon: BadgeCheck, tint: '#a855f7' },
+  { id: 'examResults', title: 'Natijalar', span: 3, icon: BarChart3, tint: '#2f80ed' },
+  { id: 'attendance', title: 'Davomat', span: 4, icon: CalendarClock, tint: '#3b82f6' },
+  { id: 'gpa', title: 'GPA', span: 8, icon: Star, tint: '#f59e0b' },
+  { id: 'gpaRating', title: 'GPA reyting', span: 12, icon: Settings2, tint: '#ef4444' },
 ]
+
+const WIDGET_SPAN_CLASS = {
+  3: 'col-span-12 sm:col-span-6 xl:col-span-3',
+  4: 'col-span-12 sm:col-span-6 xl:col-span-4',
+  8: 'col-span-12 sm:col-span-6 xl:col-span-8',
+  12: 'col-span-12',
+}
 
 const DASH_WIDGET_IDS = DASH_WIDGETS.map((w) => w.id)
 
@@ -77,11 +94,14 @@ function readWidgetPrefs(userId) {
     const raw = localStorage.getItem(widgetStorageKey(userId))
     if (!raw) return fallback
     const parsed = JSON.parse(raw)
-    const saved = Array.isArray(parsed.order) ? parsed.order : []
-    const order = [
-      ...saved.filter((id) => DASH_WIDGET_IDS.includes(id)),
-      ...DASH_WIDGET_IDS.filter((id) => !saved.includes(id)),
-    ]
+    const saved = Array.isArray(parsed.order) ? parsed.order.filter((id) => DASH_WIDGET_IDS.includes(id)) : []
+    const order = [...saved]
+    DASH_WIDGET_IDS.filter((id) => !saved.includes(id)).forEach((id) => {
+      const idx = DASH_WIDGET_IDS.indexOf(id)
+      const prev = idx > 0 ? order.indexOf(DASH_WIDGET_IDS[idx - 1]) : -1
+      if (prev >= 0) order.splice(prev + 1, 0, id)
+      else order.push(id)
+    })
     const enabled = Object.fromEntries(
       DASH_WIDGET_IDS.map((id) => [id, parsed.enabled?.[id] !== false]),
     )
@@ -104,6 +124,27 @@ function studentGpa(id) {
   let hash = 0
   for (const ch of String(id)) hash = (hash * 31 + ch.charCodeAt(0)) % 1000
   return Math.min(5, 2.2 + (hash % 250) / 100)
+}
+
+function gradeToneClass(tone) {
+  return (
+    {
+      green: 'bg-[#e7f8ee] text-[#22a84a]',
+      blue: 'bg-[#e8f1ff] text-[#2f80ed]',
+      amber: 'bg-[#fff4d6] text-[#d9a21b]',
+      red: 'bg-[#fde8ee] text-[#e45d7a]',
+    }[tone] || 'bg-[#eef1f6] text-slate-500'
+  )
+}
+
+function completedExamResults(attempts, userId) {
+  return TESTS.map((test) => {
+    const attempt = getAttempt(test, attempts, userId)
+    const score = attempt?.status === 'completed' ? scoreAnswers(test, attempt.answers) : null
+    return { test, attempt, score }
+  })
+    .filter((row) => row.score)
+    .sort((a, b) => new Date(b.attempt?.submittedAt || 0) - new Date(a.attempt?.submittedAt || 0))
 }
 
 export default function Dashboard() {
@@ -214,15 +255,28 @@ function AdminHome() {
 
 function TeacherHome() {
   const me = useCurrentUser()
+  const navigate = useNavigate()
   const users = useStore((s) => s.users)
   const groups = useStore((s) => s.groups)
   const attendance = useStore((s) => s.attendance)
   const assignments = useStore((s) => s.assignments)
   const announcements = useStore((s) => s.announcements)
   const posts = useStore((s) => s.posts)
+  const examAttempts = useStore((s) => s.examAttempts) || []
   const myGroups = groups.filter((g) => me.groupIds?.includes(g.id))
   const myStudents = users.filter((u) => u.role === 'student' && me.groupIds?.includes(u.groupId))
   const myAsg = assignments.filter((a) => a.teacherId === me.id)
+  const myTests = TESTS.filter((t) => t.teacher === me.name)
+  const teacherResults = myTests.map((test) => {
+    const scores = myStudents
+      .map((s) => {
+        const attempt = getAttempt(test, examAttempts, s.id)
+        return attempt?.status === 'completed' ? scoreAnswers(test, attempt.answers) : null
+      })
+      .filter(Boolean)
+    const avg = scores.length ? Math.round(scores.reduce((n, s) => n + s.percent, 0) / scores.length) : null
+    return { test, count: scores.length, avg }
+  })
 
   const quickActions = [
     { label: 'Davomat', sub: 'Belgilash va tarix', icon: QrCode, to: '/attendance' },
@@ -249,6 +303,44 @@ function TeacherHome() {
           <Stat title="Talabalarim" value={myStudents.length} icon={Users} />
           <Stat title="Faol topshiriqlar" value={myAsg.filter((a) => a.status === 'active').length} icon={FileText} />
         </div>
+        {teacherResults.length ? (
+          <div className="card overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-100 p-4">
+              <p className="font-bold">Test natijalari</p>
+              <button type="button" onClick={() => navigate('/exams/results')} className="text-sm font-semibold text-[#2f80ed]">
+                Barchasi
+              </button>
+            </div>
+            <ul className="divide-y divide-slate-100">
+              {teacherResults.map(({ test, count, avg }) => {
+                const grade = avg != null ? gradeFromPercent(avg) : null
+                return (
+                  <li key={test.id}>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/exams/tests/${test.id}`)}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold">{test.subject}</p>
+                        <p className="text-xs text-muted">
+                          {test.type} · {count} ta natija
+                        </p>
+                      </div>
+                      {avg != null ? (
+                        <span className={cn('rounded-full px-2.5 py-1 text-xs font-bold', gradeToneClass(grade.tone))}>
+                          {avg}%
+                        </span>
+                      ) : (
+                        <span className="text-xs font-medium text-slate-400">Natija yo‘q</span>
+                      )}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        ) : null}
         <div className="card overflow-hidden">
           <div className="border-b border-slate-100 p-4 font-bold">Guruhlaringizdagi davomat</div>
           <ul className="divide-y divide-slate-100">
@@ -282,6 +374,7 @@ function StudentDesktopDashboard({ me }) {
   const navigate = useNavigate()
   const groups = useStore((s) => s.groups)
   const schedule = useStore((s) => s.schedule)
+  const examAttempts = useStore((s) => s.examAttempts) || []
   const group = groups.find((g) => g.id === me?.groupId)
   const defaultSemester = String(Math.min(8, Math.max(1, (group?.course || 1) * 2 - 1)))
   const [achSemester, setAchSemester] = useState(defaultSemester)
@@ -303,6 +396,18 @@ function StudentDesktopDashboard({ me }) {
   const dayLabel = `${dayCursor.getDate()} ${MONTHS_UZ[dayCursor.getMonth()].toLowerCase()} - ${dayNames[dayCursor.getDay()]}`
   const weekEnd = addDays(weekCursor, 5)
   const weekLabel = `${weekCursor.getDate()}-${MONTHS_UZ_SHORT[weekCursor.getMonth()]} – ${weekEnd.getDate()}-${MONTHS_UZ_SHORT[weekEnd.getMonth()]}`
+
+  const progressSubjects = useMemo(() => {
+    const semesters = academicSemesters({ group, schedule, studentId: me?.id })
+    return semesters.find((s) => String(s.id) === String(achSemester))?.subjects || []
+  }, [group, schedule, me?.id, achSemester])
+
+  const examResults = useMemo(() => completedExamResults(examAttempts, me?.id), [examAttempts, me?.id])
+  const examAvg = examResults.length
+    ? Math.round(examResults.reduce((n, row) => n + row.score.percent, 0) / examResults.length)
+    : null
+  const examBest = examResults.length ? Math.max(...examResults.map((row) => row.score.percent)) : null
+  const examPassed = examResults.filter((row) => row.score.passed).length
   const visibleWidgets = prefs.order
     .map((id) => DASH_WIDGETS.find((w) => w.id === id))
     .filter((w) => w && prefs.enabled[w.id])
@@ -365,14 +470,14 @@ function StudentDesktopDashboard({ me }) {
             ))}
           </ul>
         ) : (
-          <EmptyFigure src="/dashboard/empty-schedule.png" title="Ushbu sanada darslar mavjud emas" />
+          <EmptyFigure src="/dashboard/empty-schedule.png?v=3" title="Ushbu sanada darslar mavjud emas" />
         )}
       </DashCard>
     ),
     progress: (
       <DashCard
         title="O‘zlashtirish"
-        onOpen={() => navigate('/education-params')}
+        onOpen={() => navigate('/education-params?tab=mastery')}
         extra={
           <div className="flex items-center gap-2">
             <SemesterSelect variant="pill" align="right" value={achSemester} onChange={setAchSemester} options={SEMESTERS} />
@@ -380,7 +485,83 @@ function StudentDesktopDashboard({ me }) {
           </div>
         }
       >
-        <EmptyFigure src="/dashboard/empty-progress.png" title="O‘zlashtirish ma’lumotlari topilmadi" />
+        {progressSubjects.length ? (
+          <ul className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-0.5">
+            {progressSubjects.map((subject) => {
+              const sc = subject.scores
+              const grade = gradeFromPercent(sc.total)
+              return (
+                <li key={subject.name} className="rounded-xl bg-[#f7f9fc] px-3 py-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="min-w-0 truncate text-[13px] font-semibold text-[#1e293b]">{subject.name}</p>
+                    <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums', gradeToneClass(grade.tone))}>
+                      {sc.total}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 flex flex-wrap gap-x-2.5 text-[10px] font-medium text-slate-400">
+                    <span>JN {sc.joriy}/{sc.joriyMax}</span>
+                    <span>ON {sc.oraliq}/{sc.oraliqMax}</span>
+                    <span>YN {sc.yakuniy}/{sc.yakuniyMax}</span>
+                  </p>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <EmptyFigure src="/dashboard/empty-progress.png?v=3" title="O‘zlashtirish ma’lumotlari topilmadi" />
+        )}
+      </DashCard>
+    ),
+    examResults: (
+      <DashCard
+        title="Natijalar"
+        onOpen={() => navigate('/exams/results')}
+        extra={
+          <div className="flex items-center gap-2">
+            {examAvg != null ? (
+              <span className="rounded-md bg-[#e8f1ff] px-2 py-0.5 text-[12px] font-bold tabular-nums text-[#2f80ed]">
+                {examAvg}%
+              </span>
+            ) : null}
+            <SupportDot />
+          </div>
+        }
+      >
+        {examResults.length ? (
+          <div className="flex h-full flex-col pt-3">
+            <div className="mb-3 grid grid-cols-3 gap-2">
+              <MiniDashStat label="O‘rtacha" value={`${examAvg}%`} />
+              <MiniDashStat label="Eng yuqori" value={`${examBest}%`} />
+              <MiniDashStat label="O‘tgan" value={`${examPassed}/${examResults.length}`} />
+            </div>
+            <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-0.5">
+              {examResults.map(({ test, attempt, score }) => (
+                <li key={test.id}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/exams/results/${test.id}`)}
+                    className="flex w-full items-start gap-2 rounded-xl bg-[#f7f9fc] px-3 py-2.5 text-left transition hover:bg-[#eef3fb]"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13px] font-semibold text-[#1e293b]">{test.subject}</span>
+                      <span className="mt-0.5 block text-[11px] text-slate-400">
+                        {test.type} · {formatExamDate(attempt.submittedAt)}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className="block text-[13px] font-bold tabular-nums text-[#1e293b]">{score.percent}%</span>
+                      <span className={cn('mt-0.5 inline-flex rounded-md px-1.5 py-0.5 text-[10px] font-bold', gradeToneClass(score.grade.tone))}>
+                        {score.grade.label}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <EmptyFigure src="/dashboard/empty-progress.png?v=3" title="Imtihon natijalari topilmadi" />
+        )}
       </DashCard>
     ),
     attendance: (
@@ -431,14 +612,21 @@ function StudentDesktopDashboard({ me }) {
       </DashCard>
     ),
     gpa: (
-      <div className="h-full rounded-[18px] bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      <DashShell>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <h3 className="text-[16px] font-semibold text-[#1e293b]">GPA</h3>
-            <span className="rounded-md bg-[#e8f8ee] px-2 py-0.5 text-[12px] font-bold text-[#22a84a]">{gpa.toFixed(2)} / 5</span>
+            <span className="rounded-md bg-[#e8f8ee] px-2 py-0.5 text-[12px] font-bold tabular-nums text-[#22a84a]">
+              {gpa.toFixed(2)} / 5
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={() => navigate('/education-params')} className="grid h-8 w-8 place-items-center rounded-lg bg-[#f3f6fb] text-slate-400 hover:bg-slate-100" aria-label="GPA hisoblagich">
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/education-params')}
+              className="grid h-8 w-8 place-items-center rounded-lg bg-[#f3f6fb] text-slate-400 hover:bg-slate-100"
+              aria-label="GPA hisoblagich"
+            >
               <Calculator size={15} />
             </button>
             <SupportDot />
@@ -449,17 +637,17 @@ function StudentDesktopDashboard({ me }) {
             2025-2026 | {group?.course || 1}-kurs
           </span>
           <span className="flex items-center gap-2">
-            <span className="rounded-md bg-[#e8f8ee] px-2 py-0.5 text-[12px] font-bold text-[#22a84a]">{gpa.toFixed(2)}</span>
+            <span className="rounded-md bg-[#e8f8ee] px-2 py-0.5 text-[12px] font-bold tabular-nums text-[#22a84a]">{gpa.toFixed(2)}</span>
             <ChevronDown size={15} className={`text-slate-400 transition ${gpaOpen ? 'rotate-180' : ''}`} />
           </span>
         </button>
-      </div>
+      </DashShell>
     ),
     gpaRating: (
-      <div className="h-full rounded-[18px] bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-        <div className="flex items-center justify-between gap-3">
+      <DashShell compact>
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="text-[16px] font-semibold text-[#1e293b]">GPA reyting</h3>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Select variant="pill" align="right" value={ratingYear} onChange={setRatingYear} options={[{ value: '2025-2026', label: '2025-2026' }]} />
             <Select
               variant="pill"
@@ -476,7 +664,7 @@ function StudentDesktopDashboard({ me }) {
         <div className="mt-4 rounded-xl bg-[#fdecee] px-4 py-3 text-[13px] font-medium text-[#e14d62]">
           Guruh bo‘yicha sizning o‘ringiz — ma’lumot topilmadi
         </div>
-      </div>
+      </DashShell>
     ),
   }
 
@@ -500,9 +688,9 @@ function StudentDesktopDashboard({ me }) {
       </div>
 
       {visibleWidgets.length ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid w-full min-w-0 grid-cols-12 grid-flow-row-dense items-stretch gap-4">
           {visibleWidgets.map((widget) => (
-            <div key={widget.id} className={widget.span === 2 ? 'min-w-0 sm:col-span-2' : 'min-w-0'}>
+            <div key={widget.id} className={cn('min-h-0 min-w-0', WIDGET_SPAN_CLASS[widget.span] || WIDGET_SPAN_CLASS[3])}>
               {widgetNodes[widget.id]}
             </div>
           ))}
@@ -701,17 +889,40 @@ function IconNav({ children, onClick }) {
 
 function EmptyFigure({ src, title }) {
   return (
-    <div className="flex min-h-[220px] flex-1 flex-col items-center justify-center px-3 pb-2 pt-4 text-center">
-      <img src={src} alt="" className="h-[132px] w-[132px] object-contain" />
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-3 py-4 text-center">
+      <img src={src} alt="" className="h-[110px] w-[110px] object-contain lg:h-[132px] lg:w-[132px] dark:opacity-95" />
       <p className="mt-3 max-w-[180px] text-[13px] leading-snug text-slate-400">{title}</p>
+    </div>
+  )
+}
+
+function MiniDashStat({ label, value }) {
+  return (
+    <div className="rounded-xl bg-[#f7f9fc] px-2 py-2 text-center">
+      <p className="text-[10px] font-medium text-slate-400">{label}</p>
+      <p className="mt-0.5 text-[15px] font-bold tabular-nums text-[#1e293b]">{value}</p>
+    </div>
+  )
+}
+
+function DashShell({ compact, className, children }) {
+  return (
+    <div
+      className={cn(
+        'flex w-full min-w-0 flex-col overflow-hidden rounded-[18px] bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]',
+        compact ? 'h-full min-h-0' : 'h-[320px] sm:h-[360px] xl:h-[380px]',
+        className,
+      )}
+    >
+      {children}
     </div>
   )
 }
 
 function DashCard({ title, sub, onOpen, extra, children }) {
   return (
-    <div className="flex min-h-[280px] min-w-0 flex-col rounded-[18px] bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)] sm:min-h-[360px]">
-      <div className="flex items-start justify-between gap-2">
+    <DashShell>
+      <div className="flex shrink-0 items-start justify-between gap-2">
         <div className="min-w-0">
           <button type="button" onClick={onOpen} className="flex items-center gap-1.5 text-left text-[15px] font-semibold text-[#1e293b]">
             {title}
@@ -721,8 +932,8 @@ function DashCard({ title, sub, onOpen, extra, children }) {
         </div>
         {extra && <div className="shrink-0">{extra}</div>}
       </div>
-      <div className="mt-1 flex flex-1 flex-col">{children}</div>
-    </div>
+      <div className="mt-1 flex min-h-0 flex-1 flex-col">{children}</div>
+    </DashShell>
   )
 }
 
@@ -732,7 +943,7 @@ function SupportDot() {
       type="button"
       title="Support"
       onClick={openSupportChat}
-      className="rounded-lg bg-gradient-to-b from-[#4cc9f0] to-[#4361ee] px-1.5 py-1.5 text-[9px] font-extrabold tracking-wide text-white shadow-[0_4px_10px_rgba(67,97,238,0.35)]"
+      className="hidden rounded-lg bg-gradient-to-b from-[#4cc9f0] to-[#4361ee] px-1.5 py-1.5 text-[9px] font-extrabold tracking-wide text-white shadow-[0_4px_10px_rgba(67,97,238,0.35)] md:inline-flex"
     >
       Support
     </button>
@@ -740,9 +951,16 @@ function SupportDot() {
 }
 
 function buildBanners({ announcements, posts }) {
+  const byDate = (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  const news = [...announcements].sort(byDate)
   return [
-    ...announcements.slice(0, 2).map((a) => ({ to: `/announcements/${a.id}`, title: a.title, cover: a.cover })),
-    ...posts.slice(0, 1).map((p) => ({ to: `/blog/${p.id}`, title: p.title, cover: p.cover })),
+    ...news.slice(0, 2).map((a) => ({
+      to: `/announcements/${a.id}`,
+      title: a.title,
+      cover: a.cover,
+      image: a.coverData || a.image,
+    })),
+    ...posts.slice(0, 1).map((p) => ({ to: `/blog/${p.id}`, title: p.title, cover: p.cover, image: p.coverData || p.image })),
   ]
 }
 
@@ -866,7 +1084,13 @@ function QuickAction({ label, sub, icon: Icon, alt, onClick }) {
 
 function IconTile({ label, icon: Icon, onClick }) {
   return (
-    <button onClick={onClick} className="card flex flex-col items-center gap-2 px-2 py-4 text-center transition hover:shadow-lg active:scale-[0.98]">
+    <button
+      onClick={onClick}
+      className={cn(
+        'card flex-col items-center gap-2 px-2 py-4 text-center transition hover:shadow-lg active:scale-[0.98]',
+        label === 'Support' ? 'hidden md:flex' : 'flex',
+      )}
+    >
       <span className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 text-brand-800">
         <Icon size={20} />
       </span>

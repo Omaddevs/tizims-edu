@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Hash, Mail, Pencil, Phone } from 'lucide-react'
+import { Pencil } from 'lucide-react'
 import { useCurrentUser, useStore } from '../store/useStore'
 import { Field, inputClass, PrimaryBtn, Select, cn } from '../components/ui'
-import { ROLE_LABEL, fileToDataUrl, initials } from '../lib/utils'
+import { fileToDataUrl, initials } from '../lib/utils'
 import { formatDateUz, profileOf } from '../lib/profile'
 import { useTheme } from '../lib/ThemeContext'
+import { TizimsIdCard } from '../components/IdCard'
 
 const TABS = [
   { id: 'profile', label: 'Profil' },
@@ -37,75 +38,18 @@ function PhotoDisk({ me, photo, className }) {
 }
 
 function ProfileCard({ me, profile, onEdit }) {
-  const student = me?.role === 'student'
   return (
-    <article className="rounded-[16px] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)] sm:p-6">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-        <PhotoDisk me={me} photo={profile.photo} className="h-[92px] w-[92px]" />
-
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-            <h2 className="text-[17px] font-bold uppercase leading-snug tracking-wide text-[#2b3340]">
-              {profile.officialName}
-            </h2>
-            {student && profile.course ? (
-              <span className="inline-flex items-center rounded-full bg-[#e7f8ee] px-2.5 py-[3px] text-[12px] font-semibold text-[#22a45a]">
-                {profile.course}-kurs
-              </span>
-            ) : (
-              <span className="inline-flex items-center rounded-full bg-[#e7f8ee] px-2.5 py-[3px] text-[12px] font-semibold text-[#22a45a]">
-                {ROLE_LABEL[me?.role] || me?.role}
-              </span>
-            )}
-            {student && profile.groupName ? (
-              <span className="inline-flex items-center rounded-full bg-[#2f80ed] px-2.5 py-[3px] text-[12px] font-semibold text-white">
-                {profile.groupName}
-              </span>
-            ) : me?.subject ? (
-              <span className="inline-flex items-center rounded-full bg-[#2f80ed] px-2.5 py-[3px] text-[12px] font-semibold text-white">
-                {me.subject}
-              </span>
-            ) : null}
-          </div>
-
-          <p className="mt-1.5 text-[13.5px] text-[#5b6472]">{profile.university}</p>
-          <p className="text-[13.5px] text-[#5b6472]">{student ? profile.faculty : ROLE_LABEL[me?.role]}</p>
-          {student && <p className="text-[13px] italic text-[#8b93a1]">{profile.specialty}</p>}
-
-          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-[12.5px] text-[#8b93a1]">
-            {student && (
-              <span className="inline-flex items-center gap-1.5">
-                <Hash size={13} strokeWidth={2.2} />
-                Talaba ID: <span className="font-medium text-[#5b6472]">{profile.studentId}</span>
-              </span>
-            )}
-            <span className="inline-flex items-center gap-1.5">
-              JSHSHIR: <span className="font-medium text-[#5b6472]">{profile.pinfl}</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Phone size={13} strokeWidth={2.2} />
-              Telefon raqami: <span className="font-medium text-[#5b6472]">{me?.phone}</span>
-            </span>
-          </div>
-
-          <p className="mt-2 inline-flex items-center gap-1.5 text-[13px] text-[#2f80ed]">
-            <Mail size={14} strokeWidth={2.2} />
-            Email: {me?.email}
-          </p>
-
-          <div className="mt-4">
-            <button
-              type="button"
-              onClick={onEdit}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[#f3b4c0] px-3.5 py-1.5 text-[13px] font-semibold text-[#e45d7a] transition hover:bg-[#fff5f7]"
-            >
-              <Pencil size={13} strokeWidth={2.2} />
-              Tahrirlash
-            </button>
-          </div>
-        </div>
-      </div>
-    </article>
+    <div className="space-y-4">
+      <TizimsIdCard me={me} profile={profile} />
+      <button
+        type="button"
+        onClick={onEdit}
+        className="inline-flex items-center gap-1.5 rounded-full border border-[#f3b4c0] px-3.5 py-1.5 text-[13px] font-semibold text-[#e45d7a] transition hover:bg-[#fff5f7]"
+      >
+        <Pencil size={13} strokeWidth={2.2} />
+        Tahrirlash
+      </button>
+    </div>
   )
 }
 

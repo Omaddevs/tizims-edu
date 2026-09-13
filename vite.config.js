@@ -8,7 +8,7 @@ export default defineConfig({
     port: 2022,
     host: true,
     watch: {
-      ignored: ['**/public/emojis/**'],
+      ignored: ['**/public/**'],
     },
   },
 })

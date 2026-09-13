@@ -3,6 +3,8 @@ import { Navigate, useNavigate, useOutletContext, useParams, useSearchParams } f
 import { Download, Plus, Search } from 'lucide-react'
 import { DOCUMENT_FILES } from '../data/catalog'
 import { Modal, Select, cn } from '../components/ui'
+import { TizimsIdCard } from '../components/IdCard'
+import { profileOf } from '../lib/profile'
 import { useCurrentUser, useStore } from '../store/useStore'
 import emptyAssignmentsPng from '../assets/empty-assignments.png'
 
@@ -173,48 +175,6 @@ function BoxPersonEmpty({ text }) {
   )
 }
 
-function FakeQr({ seed }) {
-  const n = 21
-  const cells = useMemo(() => {
-    const out = Array.from({ length: n * n }, () => 0)
-    let h = 2166136261
-    for (const ch of String(seed)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0
-    const set = (x, y, v = 1) => {
-      if (x >= 0 && y >= 0 && x < n && y < n) out[y * n + x] = v
-    }
-    const finder = (ox, oy) => {
-      for (let y = 0; y < 7; y++) {
-        for (let x = 0; x < 7; x++) {
-          const edge = x === 0 || y === 0 || x === 6 || y === 6
-          const inner = x >= 2 && x <= 4 && y >= 2 && y <= 4
-          set(ox + x, oy + y, edge || inner ? 1 : 0)
-        }
-      }
-    }
-    finder(0, 0)
-    finder(n - 7, 0)
-    finder(0, n - 7)
-    for (let i = 0; i < n * n; i++) {
-      const x = i % n
-      const y = Math.floor(i / n)
-      const inFinder =
-        (x < 8 && y < 8) || (x >= n - 8 && y < 8) || (x < 8 && y >= n - 8)
-      if (!inFinder) out[i] = ((h >>> (i % 31)) ^ (i * 2654435761)) & 1
-    }
-    return out
-  }, [seed])
-
-  return (
-    <svg width="92" height="92" viewBox={`0 0 ${n} ${n}`} className="rounded-sm bg-white" aria-hidden>
-      {cells.map((on, i) =>
-        on ? (
-          <rect key={i} x={i % n} y={Math.floor(i / n)} width="1" height="1" fill="#1e293b" />
-        ) : null,
-      )}
-    </svg>
-  )
-}
-
 function StudentDocs() {
   const { course, semester, year, specialty, blank } = useStudentContext()
   const prev = Number(year.slice(0, 4))
@@ -377,60 +337,9 @@ function ReferencesTab() {
 }
 
 function IdCardTab() {
-  const { me, group, course, faculty } = useStudentContext()
-  return (
-    <article className="relative max-w-[560px] overflow-hidden rounded-[18px] bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] sm:p-6">
-      <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-[#d7ecfb]" />
-      <div className="pointer-events-none absolute right-16 top-10 h-32 w-32 rounded-full bg-[#e7f6c9]" />
-      <p className="relative text-[15px] font-semibold text-[#2b3340]">Talaba ID Guvohnomasi</p>
-      <div className="relative mt-5 flex gap-5">
-        <div
-          className="grid h-[108px] w-[86px] shrink-0 place-items-center rounded-[10px] text-[28px] font-bold text-white"
-          style={{ background: me?.avatarColor || '#147a36' }}
-        >
-          {String(me?.name || '?')
-            .split(' ')
-            .filter(Boolean)
-            .slice(0, 2)
-            .map((p) => p[0])
-            .join('')
-            .toUpperCase()}
-        </div>
-        <div className="min-w-0 flex-1 space-y-2.5 text-[13px]">
-          <IdField label="Oliy ta’lim muassasasi" value="tizimsEdu oliy ta’lim muassasasi" />
-          <IdField label="Ism Familiya" value={String(me?.name || '').toUpperCase()} caps />
-          <IdField label="Talaba ID" value={me?.studentId || me?.id} />
-          <IdField label="Fakultet" value={faculty} />
-          <IdField label="Kurs" value={`${course}-kurs`} />
-        </div>
-        <div className="relative z-10 hidden shrink-0 flex-col items-end justify-between sm:flex">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-[#3ecf8e] to-[#147a36] text-[10px] font-black text-white">
-            t
-          </span>
-          <FakeQr seed={me?.studentId || me?.id} />
-        </div>
-      </div>
-      <div className="relative mt-5 flex items-center justify-between">
-        <span className="inline-flex items-center gap-2 rounded-full bg-[#2f80ed] px-3 py-1 text-[11px] font-bold tracking-wide text-white">
-          <span className="grid h-4 w-4 place-items-center rounded-full bg-white text-[9px] text-[#2f80ed]">●</span>
-          TIZIMSEDU.UZ
-        </span>
-        <span className="text-[12px] text-[#8b93a1]">{group?.name}</span>
-      </div>
-      <div className="mt-4 flex justify-end sm:hidden">
-        <FakeQr seed={me?.studentId || me?.id} />
-      </div>
-    </article>
-  )
-}
-
-function IdField({ label, value, caps }) {
-  return (
-    <div>
-      <p className="text-[11px] text-[#8b93a1]">{label}</p>
-      <p className={cn('font-semibold leading-snug text-[#2b3340]', caps && 'uppercase')}>{value}</p>
-    </div>
-  )
+  const { me, group } = useStudentContext()
+  const profile = useMemo(() => profileOf(me, group), [me, group])
+  return <TizimsIdCard me={me} profile={profile} />
 }
 
 function OrdersTab() {

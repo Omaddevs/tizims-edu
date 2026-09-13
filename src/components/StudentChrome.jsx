@@ -57,7 +57,7 @@ export function SoftCard({ children, className, onClick }) {
   return <div className={cls}>{children}</div>
 }
 
-export function SoftRow({ icon: Icon, title, sub, extra, onClick }) {
+export function SoftRow({ icon: Icon, title, sub, extra, onClick, iconClassName }) {
   return (
     <button
       type="button"
@@ -65,7 +65,7 @@ export function SoftRow({ icon: Icon, title, sub, extra, onClick }) {
       className="flex w-full items-center gap-3 rounded-[20px] bg-white px-3 py-3 text-left shadow-[0_2px_12px_rgba(16,80,40,0.05)]"
     >
       {Icon && (
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-brand-50 text-brand-700">
+        <span className={cn('grid h-11 w-11 shrink-0 place-items-center rounded-[14px]', iconClassName || 'bg-brand-50 text-brand-700')}>
           <Icon size={20} strokeWidth={1.8} />
         </span>
       )}

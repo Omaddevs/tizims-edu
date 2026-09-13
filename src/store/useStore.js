@@ -17,8 +17,26 @@ const DATA_KEYS = [
   'tickets',
   'notifications',
   'surveyResponses',
+  'examAttempts',
+  'savedNews',
   'currentUserId',
 ]
+
+function withNewsEngagement(item = {}) {
+  const images = item.images?.length ? item.images : [item.coverData, item.image].filter(Boolean)
+  return {
+    ...item,
+    likedBy: item.likedBy || [],
+    comments: item.comments || [],
+    images,
+  }
+}
+
+function ensureSeedItems(list, seedList) {
+  const have = new Set((list || []).map((item) => item.id))
+  const missing = seedList.filter((item) => !have.has(item.id)).map(withNewsEngagement)
+  return missing.length ? [...(list || []), ...missing] : list || []
+}
 
 const notify = (set, get, payload) => {
   const actor = get().users.find((u) => u.id === get().currentUserId)
@@ -238,6 +256,9 @@ export const useStore = create(
           createdAt: new Date().toISOString(),
           authorId: get().currentUserId,
           ...payload,
+          likedBy: [],
+          comments: [],
+          images: payload.images?.length ? payload.images : payload.coverData ? [payload.coverData] : [],
         }
         set({ announcements: [item, ...get().announcements] })
         get()
@@ -272,9 +293,74 @@ export const useStore = create(
           createdAt: new Date().toISOString(),
           authorId: get().currentUserId,
           ...payload,
+          likedBy: [],
+          comments: [],
+          images: payload.images?.length ? payload.images : payload.coverData ? [payload.coverData] : [],
         }
         set({ posts: [item, ...get().posts] })
         return item
+      },
+
+      toggleContentLike: (collection, id) => {
+        const me = get().currentUserId
+        if (!me || !Array.isArray(get()[collection])) return
+        set({
+          [collection]: get()[collection].map((item) => {
+            if (item.id !== id) return item
+            const likedBy = item.likedBy || []
+            return {
+              ...item,
+              likedBy: likedBy.includes(me) ? likedBy.filter((u) => u !== me) : [...likedBy, me],
+            }
+          }),
+        })
+      },
+
+      addContentComment: (collection, id, text) => {
+        const me = get().currentUserId
+        const trimmed = String(text || '').trim()
+        if (!me || !trimmed || !Array.isArray(get()[collection])) return null
+        const comment = {
+          id: uid('cmt'),
+          userId: me,
+          text: trimmed.slice(0, 500),
+          createdAt: new Date().toISOString(),
+        }
+        set({
+          [collection]: get()[collection].map((item) =>
+            item.id === id ? { ...item, comments: [...(item.comments || []), comment] } : item,
+          ),
+        })
+        return comment
+      },
+
+      removeContentComment: (collection, id, commentId) => {
+        const me = get().users.find((u) => u.id === get().currentUserId)
+        if (!me || !Array.isArray(get()[collection])) return
+        set({
+          [collection]: get()[collection].map((item) => {
+            if (item.id !== id) return item
+            return {
+              ...item,
+              comments: (item.comments || []).filter((c) => {
+                if (c.id !== commentId) return true
+                return !(c.userId === me.id || me.role === 'super_admin')
+              }),
+            }
+          }),
+        })
+      },
+
+      toggleSaveContent: (collection, itemId) => {
+        const me = get().currentUserId
+        if (!me) return
+        const saved = get().savedNews || []
+        const exists = saved.some((s) => s.userId === me && s.collection === collection && s.itemId === itemId)
+        set({
+          savedNews: exists
+            ? saved.filter((s) => !(s.userId === me && s.collection === collection && s.itemId === itemId))
+            : [{ userId: me, collection, itemId }, ...saved],
+        })
       },
 
       addComplaint: ({ teacherId, subject, body }) => {
@@ -558,11 +644,62 @@ export const useStore = create(
         })
       },
 
+      saveExamDraft: (testId, answers, currentIndex = 0) => {
+        const meId = get().currentUserId
+        const prev = (get().examAttempts || []).find((r) => r.testId === testId && r.userId === meId)
+        if (prev?.status === 'completed') return
+        const rest = (get().examAttempts || []).filter((r) => !(r.testId === testId && r.userId === meId))
+        set({
+          examAttempts: [
+            {
+              id: prev?.id || uid('ea'),
+              testId,
+              userId: meId,
+              status: 'in_progress',
+              answers: { ...answers },
+              currentIndex,
+              startedAt: prev?.startedAt || new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+            ...rest,
+          ],
+        })
+      },
+
+      submitExamAttempt: ({ testId, answers, subject }) => {
+        const meId = get().currentUserId
+        const prev = (get().examAttempts || []).find((r) => r.testId === testId && r.userId === meId)
+        const rest = (get().examAttempts || []).filter((r) => !(r.testId === testId && r.userId === meId))
+        const submittedAt = new Date().toISOString()
+        set({
+          examAttempts: [
+            {
+              id: prev?.id || uid('ea'),
+              testId,
+              userId: meId,
+              status: 'completed',
+              answers: { ...answers },
+              currentIndex: prev?.currentIndex || 0,
+              startedAt: prev?.startedAt || submittedAt,
+              submittedAt,
+              updatedAt: submittedAt,
+            },
+            ...rest,
+          ],
+        })
+        notify(set, get, {
+          userId: meId,
+          title: 'Test natijasi saqlandi',
+          body: `${subject || 'Imtihon testi'} yakunlandi. Natijalar bo‘limidan ko‘rishingiz mumkin.`,
+          type: 'exam',
+        })
+      },
+
       resetDemo: () => set({ ...seed, currentUserId: null }),
     }),
     {
       name: 'tizimsedu-db-v3',
-      version: 6,
+      version: 13,
       migrate: (persisted, version) => {
         let next = persisted
         if (version < 4) next = { ...next, books: seed.books }
@@ -584,7 +721,60 @@ export const useStore = create(
             ],
           }
         }
+        if (version < 7) next = { ...next, examAttempts: next.examAttempts || [] }
+        if (version < 8) {
+          const seedIds = new Set(seed.announcements.map((a) => a.id))
+          const extras = (next.announcements || []).filter((a) => !seedIds.has(a.id) && !['an1', 'an2', 'an3'].includes(a.id))
+          next = { ...next, announcements: [...seed.announcements, ...extras] }
+        }
+        if (version < 9) {
+          const seedIds = new Set(seed.announcements.map((a) => a.id))
+          const extras = (next.announcements || []).filter((a) => !seedIds.has(a.id))
+          next = {
+            ...next,
+            announcements: [...seed.announcements, ...extras.map(withNewsEngagement)],
+            posts: (next.posts || seed.posts).map(withNewsEngagement),
+            savedNews: Array.isArray(next.savedNews) ? next.savedNews : seed.savedNews || [],
+          }
+        }
+        if (version < 10) {
+          const seedIds = new Set(seed.announcements.map((a) => a.id))
+          const extras = (next.announcements || []).filter((a) => !seedIds.has(a.id))
+          next = {
+            ...next,
+            announcements: [...seed.announcements, ...extras.map(withNewsEngagement)],
+            savedNews: Array.isArray(next.savedNews) ? next.savedNews : seed.savedNews || [],
+          }
+        }
+        if (version < 11) {
+          const seedIds = new Set(seed.announcements.map((a) => a.id))
+          const extras = (next.announcements || []).filter((a) => !seedIds.has(a.id))
+          next = {
+            ...next,
+            announcements: [...seed.announcements, ...extras.map(withNewsEngagement)],
+          }
+        }
+        if (version < 12) {
+          const seedIds = new Set(seed.announcements.map((a) => a.id))
+          const extras = (next.announcements || []).filter((a) => !seedIds.has(a.id))
+          next = {
+            ...next,
+            announcements: [...seed.announcements, ...extras.map(withNewsEngagement)],
+          }
+        }
+        if (version < 13) {
+          next = {
+            ...next,
+            announcements: ensureSeedItems(next.announcements, seed.announcements),
+          }
+        }
         return next
+      },
+      onRehydrateStorage: () => (state) => {
+        if (!state) return
+        const announcements = ensureSeedItems(state.announcements, seed.announcements)
+        if (announcements === state.announcements) return
+        queueMicrotask(() => useStore.setState({ announcements }))
       },
       partialize: (state) => Object.fromEntries(DATA_KEYS.map((k) => [k, state[k]])),
     },
